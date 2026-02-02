@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voetballer Raadspel</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Hoofdmenu -->
+        <div id="main-menu" class="screen active">
+            <h1>⚽ Voetballer Raadspel</h1>
+            <div class="menu-section">
+                <h2>Kies je spelmodus</h2>
+                <button class="btn btn-primary" onclick="selectGameMode('guess-player')">
+                    🎯 Raad de Speler
+                    <span class="btn-desc">Raad welke voetballer bij deze clubs speelde</span>
+                </button>
+                <button class="btn btn-primary" onclick="selectGameMode('guess-clubs')">
+                    🏟️ Raad de Clubs
+                    <span class="btn-desc">Noem zoveel mogelijk clubs van een speler</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Speler selectie -->
+        <div id="player-setup" class="screen">
+            <h1>⚽ Spelers Setup</h1>
+            <div class="setup-section">
+                <h2>Hoeveel spelers?</h2>
+                <div class="player-count-buttons">
+                    <button class="btn btn-secondary" onclick="setPlayerCount(1)">Solo</button>
+                    <button class="btn btn-secondary" onclick="setPlayerCount(2)">2 Spelers</button>
+                    <button class="btn btn-secondary" onclick="setPlayerCount(3)">3 Spelers</button>
+                    <button class="btn btn-secondary" onclick="setPlayerCount(4)">4 Spelers</button>
+                </div>
+            </div>
+            <div id="player-names" class="player-names-section" style="display: none;">
+                <h2>Voer namen in</h2>
+                <div id="name-inputs"></div>
+                <button class="btn btn-primary" onclick="startGame()">Start Spel!</button>
+            </div>
+            <button class="btn btn-back" onclick="goToMenu()">← Terug</button>
+        </div>
+
+        <!-- Spelmodus 1: Raad de speler -->
+        <div id="guess-player-game" class="screen">
+            <div class="game-header">
+                <div class="current-player">
+                    <span id="current-player-name">Speler 1</span>'s beurt
+                </div>
+                <div class="timer" id="timer-display">30</div>
+                <div class="round-info">Ronde <span id="round-number">1</span>/10</div>
+            </div>
+
+            <div class="scoreboard" id="scoreboard"></div>
+
+            <div class="game-content">
+                <h2>Bij welke voetballer horen deze clubs?</h2>
+                <div class="clubs-list" id="clubs-list"></div>
+
+                <div class="answer-section">
+                    <input type="text" id="player-answer" placeholder="Typ de naam van de speler..." autocomplete="off">
+                    <div class="suggestions" id="suggestions"></div>
+                    <button class="btn btn-primary" onclick="submitGuessPlayer()">Bevestig</button>
+                </div>
+
+                <div class="hint-section">
+                    <button class="btn btn-hint" onclick="revealNextClub()">Volgende club onthullen (-5 punten)</button>
+                </div>
+            </div>
+
+            <div id="answer-reveal" class="answer-reveal" style="display: none;">
+                <div class="reveal-content">
+                    <h3 id="reveal-result"></h3>
+                    <p>Het antwoord was: <strong id="correct-answer"></strong></p>
+                    <p id="points-earned"></p>
+                    <button class="btn btn-primary" onclick="nextRound()">Volgende Ronde</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spelmodus 2: Raad de clubs -->
+        <div id="guess-clubs-game" class="screen">
+            <div class="game-header">
+                <div class="current-player">
+                    <span id="current-player-name-clubs">Speler 1</span>'s beurt
+                </div>
+                <div class="timer" id="timer-display-clubs">30</div>
+                <div class="round-info">Ronde <span id="round-number-clubs">1</span>/10</div>
+            </div>
+
+            <div class="scoreboard" id="scoreboard-clubs"></div>
+
+            <div class="game-content">
+                <h2>Welke clubs ken je van deze speler?</h2>
+                <div class="player-reveal">
+                    <div class="player-name-display" id="player-to-guess"></div>
+                    <div class="player-nationality" id="player-nationality"></div>
+                </div>
+
+                <div class="guessed-clubs" id="guessed-clubs"></div>
+
+                <div class="answer-section">
+                    <input type="text" id="club-answer" placeholder="Typ een clubnaam..." autocomplete="off">
+                    <div class="suggestions" id="club-suggestions"></div>
+                    <button class="btn btn-primary" onclick="submitGuessClub()">Bevestig</button>
+                </div>
+
+                <div class="clubs-progress">
+                    <span id="clubs-found">0</span>/<span id="clubs-total">0</span> clubs gevonden
+                </div>
+            </div>
+
+            <div id="answer-reveal-clubs" class="answer-reveal" style="display: none;">
+                <div class="reveal-content">
+                    <h3 id="reveal-result-clubs"></h3>
+                    <p>Alle clubs van <strong id="player-name-result"></strong>:</p>
+                    <div id="all-clubs-list" class="all-clubs-list"></div>
+                    <p id="points-earned-clubs"></p>
+                    <button class="btn btn-primary" onclick="nextRoundClubs()">Volgende Ronde</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Eindscherm -->
+        <div id="game-over" class="screen">
+            <h1>🏆 Spel Afgelopen!</h1>
+            <div class="final-scores" id="final-scores"></div>
+            <div class="winner-announcement" id="winner-announcement"></div>
+            <div class="game-over-buttons">
+                <button class="btn btn-primary" onclick="restartGame()">Opnieuw Spelen</button>
+                <button class="btn btn-secondary" onclick="goToMenu()">Hoofdmenu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="players.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
