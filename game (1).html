@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voetballer Raadspel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #2D2B2B;
+    min-height: 100vh;
+    color: #ECECEC;
+    line-height: 1.5;
+}
+.container { max-width: 700px; margin: 0 auto; padding: 24px; min-height: 100vh; }
+.screen { display: none; }
+.screen.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+h1 { text-align: center; font-size: 1.875rem; font-weight: 600; margin-bottom: 32px; color: #ECECEC; letter-spacing: -0.02em; }
+h2 { text-align: center; font-size: 1.125rem; font-weight: 500; margin-bottom: 20px; color: #A8A8A8; }
+.btn {
+    display: block; width: 100%; padding: 14px 20px; margin: 10px 0;
+    border: 1px solid #4A4545; border-radius: 12px; font-size: 1rem;
+    font-family: inherit; font-weight: 500; cursor: pointer;
+    transition: all 0.15s ease; background: #3D3939; color: #ECECEC;
+}
+.btn:hover { background: #4A4545; border-color: #5A5555; }
+.btn-primary { background: #B4A7D6; color: #1A1A1A; border-color: #B4A7D6; }
+.btn-primary:hover { background: #C5B8E3; border-color: #C5B8E3; }
+.btn-secondary { background: #3D3939; color: #ECECEC; border-color: #4A4545; }
+.btn-secondary:hover { background: #4A4545; }
+.btn-hint { background: transparent; color: #B4A7D6; border-color: #B4A7D6; }
+.btn-hint:hover { background: rgba(180, 167, 214, 0.1); }
+.btn-back { background: transparent; color: #7A7575; border: 1px solid #4A4545; margin-top: 20px; }
+.btn-back:hover { background: #3D3939; color: #A8A8A8; }
+.btn-desc { display: block; font-size: 0.8rem; font-weight: 400; opacity: 0.7; margin-top: 4px; }
+.menu-section, .setup-section, .player-names-section {
+    background: #363232; padding: 28px; border-radius: 16px; margin-bottom: 16px; border: 1px solid #4A4545;
+}
+.player-count-buttons, .difficulty-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.difficulty-buttons { grid-template-columns: repeat(3, 1fr); }
+.name-input {
+    width: 100%; padding: 12px 16px; margin: 8px 0; border: 1px solid #4A4545;
+    border-radius: 10px; background: #2D2B2B; color: #ECECEC; font-size: 1rem; font-family: inherit;
+}
+.name-input:focus { outline: none; border-color: #B4A7D6; box-shadow: 0 0 0 3px rgba(180, 167, 214, 0.15); }
+.name-input::placeholder { color: #7A7575; }
+.game-header {
+    display: flex; justify-content: space-between; align-items: center;
+    background: #363232; padding: 16px 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #4A4545;
+}
+.current-player { font-size: 1rem; font-weight: 500; }
+#current-player-name, #current-player-name-clubs { color: #B4A7D6; font-weight: 600; }
+.timer { font-size: 1.75rem; font-weight: 600; color: #B4A7D6; min-width: 50px; text-align: center; font-variant-numeric: tabular-nums; }
+.timer.warning { color: #E8B089; }
+.timer.danger { color: #E07A7A; animation: pulse 0.5s infinite; }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+.round-info { color: #7A7575; font-size: 0.9rem; }
+.scoreboard { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.score-item { background: #363232; padding: 10px 20px; border-radius: 10px; text-align: center; min-width: 90px; border: 1px solid #4A4545; }
+.score-item.active { background: rgba(180, 167, 214, 0.15); border-color: #B4A7D6; }
+.score-name { font-size: 0.8rem; color: #7A7575; font-weight: 500; }
+.score-value { font-size: 1.375rem; font-weight: 600; color: #ECECEC; font-variant-numeric: tabular-nums; }
+.game-content { background: #363232; padding: 28px; border-radius: 16px; border: 1px solid #4A4545; }
+.clubs-list { display: flex; flex-direction: column; gap: 8px; margin: 20px 0; }
+.club-item { background: #2D2B2B; padding: 14px 18px; border-radius: 10px; display: flex; align-items: center; gap: 12px; border: 1px solid #4A4545; }
+.club-item.hidden { background: #2D2B2B; color: #5A5555; border-style: dashed; }
+.club-years { color: #7A7575; font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+.club-name { flex: 1; font-weight: 500; }
+.answer-section { margin-top: 20px; position: relative; }
+#player-answer, #club-answer, #custom-player-input {
+    width: 100%; padding: 14px 16px; border: 1px solid #4A4545; border-radius: 10px;
+    background: #2D2B2B; color: #ECECEC; font-size: 1rem; font-family: inherit;
+}
+#player-answer:focus, #club-answer:focus, #custom-player-input:focus {
+    outline: none; border-color: #B4A7D6; box-shadow: 0 0 0 3px rgba(180, 167, 214, 0.15);
+}
+#player-answer::placeholder, #club-answer::placeholder, #custom-player-input::placeholder { color: #7A7575; }
+.suggestions {
+    position: absolute; top: 100%; left: 0; right: 0; background: #3D3939;
+    border: 1px solid #4A4545; border-top: none; border-radius: 0 0 10px 10px;
+    max-height: 200px; overflow-y: auto; z-index: 100; display: none;
+}
+.suggestions.active { display: block; }
+.suggestion-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #4A4545; font-size: 0.95rem; }
+.suggestion-item:hover { background: rgba(180, 167, 214, 0.15); }
+.suggestion-item:last-child { border-bottom: none; }
+.hint-section { margin-top: 16px; text-align: center; }
+.player-reveal { text-align: center; margin: 24px 0; }
+.player-name-display { font-size: 1.75rem; font-weight: 600; color: #B4A7D6; letter-spacing: -0.02em; }
+.player-nationality { color: #7A7575; margin-top: 4px; font-size: 0.95rem; }
+.guessed-clubs { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; min-height: 44px; }
+.guessed-club { background: #B4A7D6; color: #1A1A1A; padding: 8px 14px; border-radius: 20px; font-size: 0.875rem; font-weight: 500; animation: popIn 0.2s ease; }
+@keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.clubs-progress { text-align: center; color: #7A7575; margin-top: 16px; font-size: 0.9rem; }
+.answer-reveal {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px);
+}
+.reveal-content { background: #363232; padding: 36px; border-radius: 20px; text-align: center; max-width: 440px; width: 90%; border: 1px solid #4A4545; }
+.reveal-content h3 { font-size: 1.5rem; margin-bottom: 16px; font-weight: 600; }
+.reveal-content h3.correct { color: #7ED687; }
+.reveal-content h3.incorrect { color: #E07A7A; }
+.reveal-content h3.timeout { color: #E8B089; }
+#correct-answer, #player-name-result { color: #B4A7D6; }
+#points-earned, #points-earned-clubs { margin: 16px 0; font-size: 1.125rem; color: #A8A8A8; }
+.all-clubs-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 16px 0; }
+.all-clubs-list .club-tag { background: #2D2B2B; padding: 6px 12px; border-radius: 16px; font-size: 0.8rem; border: 1px solid #4A4545; }
+.all-clubs-list .club-tag.found { background: #B4A7D6; color: #1A1A1A; border-color: #B4A7D6; }
+#game-over { text-align: center; }
+.final-scores { background: #363232; padding: 28px; border-radius: 16px; margin: 28px 0; border: 1px solid #4A4545; }
+.final-score-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; margin: 8px 0; background: #2D2B2B; border-radius: 10px; border: 1px solid #4A4545; }
+.final-score-item.winner { background: rgba(180, 167, 214, 0.15); border-color: #B4A7D6; }
+.final-score-item .rank { font-size: 1.25rem; width: 44px; }
+.final-score-item .name { flex: 1; font-size: 1.1rem; font-weight: 500; }
+.final-score-item .score { font-size: 1.25rem; font-weight: 600; }
+.winner-announcement { font-size: 1.25rem; color: #B4A7D6; margin-bottom: 20px; font-weight: 600; }
+.game-over-buttons { display: flex; gap: 10px; }
+.game-over-buttons .btn { flex: 1; }
+.mode-selection { margin: 20px 0; }
+.mode-option {
+    display: flex; align-items: center; padding: 14px 16px; margin: 8px 0;
+    background: #2D2B2B; border: 1px solid #4A4545; border-radius: 10px; cursor: pointer; transition: all 0.15s ease;
+}
+.mode-option:hover { border-color: #5A5555; background: #363232; }
+.mode-option.selected { border-color: #B4A7D6; background: rgba(180, 167, 214, 0.1); }
+.mode-option input[type="radio"] { display: none; }
+.mode-radio { width: 20px; height: 20px; border: 2px solid #4A4545; border-radius: 50%; margin-right: 12px; display: flex; align-items: center; justify-content: center; }
+.mode-option.selected .mode-radio { border-color: #B4A7D6; }
+.mode-option.selected .mode-radio::after { content: ''; width: 10px; height: 10px; background: #B4A7D6; border-radius: 50%; }
+.mode-label { flex: 1; }
+.mode-label-title { font-weight: 500; color: #ECECEC; }
+.mode-label-desc { font-size: 0.8rem; color: #7A7575; margin-top: 2px; }
+.custom-player-section { margin-top: 16px; display: none; }
+.custom-player-section.active { display: block; }
+.difficulty-btn { padding: 12px 16px; font-size: 0.9rem; }
+.difficulty-btn.selected { background: #B4A7D6; color: #1A1A1A; border-color: #B4A7D6; }
+.player-count { text-align: center; color: #7A7575; font-size: 0.85rem; margin-top: 8px; }
+@media (max-width: 600px) {
+    h1 { font-size: 1.5rem; }
+    .container { padding: 16px; }
+    .game-header { flex-direction: column; gap: 12px; padding: 14px 16px; }
+    .player-count-buttons { grid-template-columns: 1fr; }
+    .difficulty-buttons { grid-template-columns: 1fr; }
+    .score-item { min-width: 75px; padding: 8px 14px; }
+    .game-content, .menu-section, .setup-section { padding: 20px; }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="main-menu" class="screen active">
+            <h1>⚽ Voetballer Raadspel</h1>
+            <div class="menu-section">
+                <h2>Kies je spelmodus</h2>
+                <button class="btn btn-primary" onclick="selectGameMode('guess-player')">
+                    Raad de Speler
+                    <span class="btn-desc">Raad welke voetballer bij deze clubs speelde</span>
+                </button>
+                <button class="btn btn-primary" onclick="selectGameMode('guess-clubs')">
+                    Raad de Clubs
+                    <span class="btn-desc">Noem zoveel mogelijk clubs van een speler</span>
+                </button>
+                <p class="player-count" id="total-players-count"></p>
+            </div>
+        </div>
+
+        <div id="player-setup" class="screen">
+            <h1>⚽ Spelers Setup</h1>
+            <div class="setup-section">
+                <h2>Hoeveel spelers?</h2>
+                <div class="player-count-buttons">
+                    <button class="btn btn-secondary" onclick="setPlayerCount(1)">Solo</button>
+                    <button class="btn btn-secondary" onclick="setPlayerCount(2)">2 Spelers</button>
+                    <button class="btn btn-secondary" onclick="setPlayerCount(3)">3 Spelers</button>
+                    <button class="btn btn-secondary" onclick="setPlayerCount(4)">4 Spelers</button>
+                </div>
+            </div>
+            <div id="player-names" class="player-names-section" style="display: none;">
+                <h2>Voer namen in</h2>
+                <div id="name-inputs"></div>
+                <h2 style="margin-top: 24px;">Moeilijkheidsgraad</h2>
+                <div class="difficulty-buttons">
+                    <button class="btn btn-secondary difficulty-btn selected" onclick="setDifficulty('easy')" id="diff-easy">Makkelijk</button>
+                    <button class="btn btn-secondary difficulty-btn" onclick="setDifficulty('medium')" id="diff-medium">Gemiddeld</button>
+                    <button class="btn btn-secondary difficulty-btn" onclick="setDifficulty('hard')" id="diff-hard">Moeilijk</button>
+                </div>
+                <p class="player-count" id="difficulty-desc">Bekende spelers met herkenbare carrières</p>
+                <button class="btn btn-primary" onclick="proceedToModeOptions()" style="margin-top: 20px;">Volgende</button>
+            </div>
+            <button class="btn btn-back" onclick="goToMenu()">← Terug</button>
+        </div>
+
+        <div id="clubs-mode-setup" class="screen">
+            <h1>⚽ Raad de Clubs</h1>
+            <div class="setup-section">
+                <h2>Hoe wil je spelen?</h2>
+                <div class="mode-selection">
+                    <label class="mode-option selected" onclick="selectClubsMode('random')">
+                        <input type="radio" name="clubs-mode" value="random" checked>
+                        <span class="mode-radio"></span>
+                        <span class="mode-label">
+                            <span class="mode-label-title">Willekeurige speler</span>
+                            <span class="mode-label-desc">Het spel kiest een willekeurige speler</span>
+                        </span>
+                    </label>
+                    <label class="mode-option" onclick="selectClubsMode('custom')">
+                        <input type="radio" name="clubs-mode" value="custom">
+                        <span class="mode-radio"></span>
+                        <span class="mode-label">
+                            <span class="mode-label-title">Kies zelf een speler</span>
+                            <span class="mode-label-desc">Voer zelf een spelernaam in</span>
+                        </span>
+                    </label>
+                </div>
+                <div id="custom-player-section" class="custom-player-section">
+                    <input type="text" id="custom-player-input" placeholder="Typ een spelernaam..." autocomplete="off">
+                    <div class="suggestions" id="custom-player-suggestions"></div>
+                </div>
+                <button class="btn btn-primary" onclick="startGame()" style="margin-top: 20px;">Start Spel!</button>
+            </div>
+            <button class="btn btn-back" onclick="showScreen('player-setup')">← Terug</button>
+        </div>
+
+        <div id="guess-player-game" class="screen">
+            <div class="game-header">
+                <div class="current-player"><span id="current-player-name">Speler 1</span>'s beurt</div>
+                <div class="timer" id="timer-display">30</div>
+                <div class="round-info">Ronde <span id="round-number">1</span>/10</div>
+            </div>
+            <div class="scoreboard" id="scoreboard"></div>
+            <div class="game-content">
+                <h2>Bij welke voetballer horen deze clubs?</h2>
+                <div class="clubs-list" id="clubs-list"></div>
+                <div class="answer-section">
+                    <input type="text" id="player-answer" placeholder="Typ de naam van de speler..." autocomplete="off">
+                    <div class="suggestions" id="suggestions"></div>
+                    <button class="btn btn-primary" onclick="submitGuessPlayer()">Bevestig</button>
+                </div>
+                <div class="hint-section">
+                    <button class="btn btn-hint" onclick="revealNextClub()">Volgende club onthullen</button>
+                </div>
+            </div>
+            <div id="answer-reveal" class="answer-reveal" style="display: none;">
+                <div class="reveal-content">
+                    <h3 id="reveal-result"></h3>
+                    <p>Het antwoord was: <strong id="correct-answer"></strong></p>
+                    <p id="points-earned"></p>
+                    <button class="btn btn-primary" onclick="nextRound()">Volgende Ronde</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="guess-clubs-game" class="screen">
+            <div class="game-header">
+                <div class="current-player"><span id="current-player-name-clubs">Speler 1</span>'s beurt</div>
+                <div class="timer" id="timer-display-clubs">30</div>
+                <div class="round-info">Ronde <span id="round-number-clubs">1</span>/10</div>
+            </div>
+            <div class="scoreboard" id="scoreboard-clubs"></div>
+            <div class="game-content">
+                <h2>Welke clubs ken je van deze speler?</h2>
+                <div class="player-reveal">
+                    <div class="player-name-display" id="player-to-guess"></div>
+                    <div class="player-nationality" id="player-nationality"></div>
+                </div>
+                <div class="guessed-clubs" id="guessed-clubs"></div>
+                <div class="answer-section">
+                    <input type="text" id="club-answer" placeholder="Typ een clubnaam..." autocomplete="off">
+                    <div class="suggestions" id="club-suggestions"></div>
+                    <button class="btn btn-primary" onclick="submitGuessClub()">Bevestig</button>
+                </div>
+                <div class="clubs-progress">
+                    <span id="clubs-found">0</span>/<span id="clubs-total">0</span> clubs gevonden
+                </div>
+            </div>
+            <div id="answer-reveal-clubs" class="answer-reveal" style="display: none;">
+                <div class="reveal-content">
+                    <h3 id="reveal-result-clubs"></h3>
+                    <p>Alle clubs van <strong id="player-name-result"></strong>:</p>
+                    <div id="all-clubs-list" class="all-clubs-list"></div>
+                    <p id="points-earned-clubs"></p>
+                    <button class="btn btn-primary" onclick="nextRoundClubs()">Volgende Ronde</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-over" class="screen">
+            <h1>🏆 Spel Afgelopen!</h1>
+            <div class="final-scores" id="final-scores"></div>
+            <div class="winner-announcement" id="winner-announcement"></div>
+            <div class="game-over-buttons">
+                <button class="btn btn-primary" onclick="restartGame()">Opnieuw Spelen</button>
+                <button class="btn btn-secondary" onclick="goToMenu()">Hoofdmenu</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// UITGEBREIDE DATABASE - 120+ spelers met focus op Nederland/Eredivisie
+const PLAYERS_DATABASE = [
+    // MAKKELIJK - Wereldsterren (iedereen kent deze)
+    { id: 1, name: "Cristiano Ronaldo", nationality: "Portugal", difficulty: "easy", clubs: [{ name: "Sporting CP", years: "2002-2003" }, { name: "Manchester United", years: "2003-2009" }, { name: "Real Madrid", years: "2009-2018" }, { name: "Juventus", years: "2018-2021" }, { name: "Manchester United", years: "2021-2022" }, { name: "Al-Nassr", years: "2023-heden" }] },
+    { id: 2, name: "Lionel Messi", nationality: "Argentinië", difficulty: "easy", clubs: [{ name: "Barcelona", years: "2004-2021" }, { name: "Paris Saint-Germain", years: "2021-2023" }, { name: "Inter Miami", years: "2023-heden" }] },
+    { id: 3, name: "Kylian Mbappé", nationality: "Frankrijk", difficulty: "easy", clubs: [{ name: "AS Monaco", years: "2015-2017" }, { name: "Paris Saint-Germain", years: "2017-2024" }, { name: "Real Madrid", years: "2024-heden" }] },
+    { id: 4, name: "Erling Haaland", nationality: "Noorwegen", difficulty: "easy", clubs: [{ name: "Molde FK", years: "2017-2019" }, { name: "Red Bull Salzburg", years: "2019-2020" }, { name: "Borussia Dortmund", years: "2020-2022" }, { name: "Manchester City", years: "2022-heden" }] },
+    { id: 5, name: "Neymar Jr", nationality: "Brazilië", difficulty: "easy", clubs: [{ name: "Santos", years: "2009-2013" }, { name: "Barcelona", years: "2013-2017" }, { name: "Paris Saint-Germain", years: "2017-2023" }, { name: "Al-Hilal", years: "2023-heden" }] },
+    { id: 6, name: "Robert Lewandowski", nationality: "Polen", difficulty: "easy", clubs: [{ name: "Lech Poznań", years: "2008-2010" }, { name: "Borussia Dortmund", years: "2010-2014" }, { name: "Bayern München", years: "2014-2022" }, { name: "Barcelona", years: "2022-heden" }] },
+    { id: 7, name: "Kevin De Bruyne", nationality: "België", difficulty: "easy", clubs: [{ name: "Racing Genk", years: "2008-2012" }, { name: "Chelsea", years: "2012-2014" }, { name: "VfL Wolfsburg", years: "2014-2015" }, { name: "Manchester City", years: "2015-heden" }] },
+    { id: 8, name: "Mohamed Salah", nationality: "Egypte", difficulty: "easy", clubs: [{ name: "Basel", years: "2012-2014" }, { name: "Chelsea", years: "2014-2016" }, { name: "AS Roma", years: "2015-2017" }, { name: "Liverpool", years: "2017-heden" }] },
+    { id: 9, name: "Luka Modrić", nationality: "Kroatië", difficulty: "easy", clubs: [{ name: "Dinamo Zagreb", years: "2003-2008" }, { name: "Tottenham Hotspur", years: "2008-2012" }, { name: "Real Madrid", years: "2012-heden" }] },
+    { id: 10, name: "Karim Benzema", nationality: "Frankrijk", difficulty: "easy", clubs: [{ name: "Olympique Lyon", years: "2005-2009" }, { name: "Real Madrid", years: "2009-2023" }, { name: "Al-Ittihad", years: "2023-heden" }] },
+
+    // MAKKELIJK - Nederlandse legendes
+    { id: 11, name: "Johan Cruijff", nationality: "Nederland", difficulty: "easy", clubs: [{ name: "Ajax", years: "1964-1973" }, { name: "Barcelona", years: "1973-1978" }, { name: "Ajax", years: "1981-1983" }, { name: "Feyenoord", years: "1983-1984" }] },
+    { id: 12, name: "Marco van Basten", nationality: "Nederland", difficulty: "easy", clubs: [{ name: "Ajax", years: "1981-1987" }, { name: "AC Milan", years: "1987-1995" }] },
+    { id: 13, name: "Ruud Gullit", nationality: "Nederland", difficulty: "easy", clubs: [{ name: "Feyenoord", years: "1982-1985" }, { name: "PSV", years: "1985-1987" }, { name: "AC Milan", years: "1987-1993" }, { name: "Chelsea", years: "1995-1998" }] },
+    { id: 14, name: "Dennis Bergkamp", nationality: "Nederland", difficulty: "easy", clubs: [{ name: "Ajax", years: "1986-1993" }, { name: "Inter Milan", years: "1993-1995" }, { name: "Arsenal", years: "1995-2006" }] },
+    { id: 15, name: "Arjen Robben", nationality: "Nederland", difficulty: "easy", clubs: [{ name: "FC Groningen", years: "2000-2002" }, { name: "PSV", years: "2002-2004" }, { name: "Chelsea", years: "2004-2007" }, { name: "Real Madrid", years: "2007-2009" }, { name: "Bayern München", years: "2009-2019" }] },
+    { id: 16, name: "Wesley Sneijder", nationality: "Nederland", difficulty: "easy", clubs: [{ name: "Ajax", years: "2002-2007" }, { name: "Real Madrid", years: "2007-2009" }, { name: "Inter Milan", years: "2009-2013" }, { name: "Galatasaray", years: "2013-2017" }] },
+    { id: 17, name: "Robin van Persie", nationality: "Nederland", difficulty: "easy", clubs: [{ name: "Feyenoord", years: "2001-2004" }, { name: "Arsenal", years: "2004-2012" }, { name: "Manchester United", years: "2012-2015" }, { name: "Fenerbahçe", years: "2015-2018" }, { name: "Feyenoord", years: "2018-2019" }] },
+    { id: 18, name: "Ruud van Nistelrooy", nationality: "Nederland", difficulty: "easy", clubs: [{ name: "FC Den Bosch", years: "1993-1998" }, { name: "PSV", years: "1998-2001" }, { name: "Manchester United", years: "2001-2006" }, { name: "Real Madrid", years: "2006-2010" }] },
+    { id: 19, name: "Virgil van Dijk", nationality: "Nederland", difficulty: "easy", clubs: [{ name: "Willem II", years: "2010-2013" }, { name: "FC Groningen", years: "2013-2015" }, { name: "Celtic", years: "2015-2017" }, { name: "Southampton", years: "2017-2018" }, { name: "Liverpool", years: "2018-heden" }] },
+    { id: 20, name: "Frenkie de Jong", nationality: "Nederland", difficulty: "easy", clubs: [{ name: "Willem II", years: "2015-2016" }, { name: "Ajax", years: "2016-2019" }, { name: "Barcelona", years: "2019-heden" }] },
+
+    // MAKKELIJK - Bekende internationale spelers
+    { id: 21, name: "Zlatan Ibrahimović", nationality: "Zweden", difficulty: "easy", clubs: [{ name: "Malmö FF", years: "1999-2001" }, { name: "Ajax", years: "2001-2004" }, { name: "Juventus", years: "2004-2006" }, { name: "Inter Milan", years: "2006-2009" }, { name: "Barcelona", years: "2009-2010" }, { name: "AC Milan", years: "2010-2012" }, { name: "Paris Saint-Germain", years: "2012-2016" }, { name: "Manchester United", years: "2016-2018" }, { name: "AC Milan", years: "2020-2023" }] },
+    { id: 22, name: "Harry Kane", nationality: "Engeland", difficulty: "easy", clubs: [{ name: "Tottenham Hotspur", years: "2009-2023" }, { name: "Bayern München", years: "2023-heden" }] },
+    { id: 23, name: "Eden Hazard", nationality: "België", difficulty: "easy", clubs: [{ name: "Lille", years: "2007-2012" }, { name: "Chelsea", years: "2012-2019" }, { name: "Real Madrid", years: "2019-2023" }] },
+    { id: 24, name: "Sergio Ramos", nationality: "Spanje", difficulty: "easy", clubs: [{ name: "Sevilla", years: "2003-2005" }, { name: "Real Madrid", years: "2005-2021" }, { name: "Paris Saint-Germain", years: "2021-2023" }, { name: "Sevilla", years: "2023-heden" }] },
+    { id: 25, name: "Gareth Bale", nationality: "Wales", difficulty: "easy", clubs: [{ name: "Southampton", years: "2006-2007" }, { name: "Tottenham Hotspur", years: "2007-2013" }, { name: "Real Madrid", years: "2013-2022" }, { name: "Los Angeles FC", years: "2022-2023" }] },
+    { id: 26, name: "David Beckham", nationality: "Engeland", difficulty: "easy", clubs: [{ name: "Manchester United", years: "1992-2003" }, { name: "Real Madrid", years: "2003-2007" }, { name: "LA Galaxy", years: "2007-2012" }, { name: "AC Milan", years: "2009-2010" }, { name: "Paris Saint-Germain", years: "2013" }] },
+    { id: 27, name: "Thierry Henry", nationality: "Frankrijk", difficulty: "easy", clubs: [{ name: "AS Monaco", years: "1994-1999" }, { name: "Juventus", years: "1999" }, { name: "Arsenal", years: "1999-2007" }, { name: "Barcelona", years: "2007-2010" }, { name: "New York Red Bulls", years: "2010-2014" }] },
+    { id: 28, name: "Didier Drogba", nationality: "Ivoorkust", difficulty: "easy", clubs: [{ name: "Olympique Marseille", years: "2003-2004" }, { name: "Chelsea", years: "2004-2012" }, { name: "Galatasaray", years: "2013" }, { name: "Chelsea", years: "2014-2015" }] },
+    { id: 29, name: "Steven Gerrard", nationality: "Engeland", difficulty: "easy", clubs: [{ name: "Liverpool", years: "1998-2015" }, { name: "LA Galaxy", years: "2015-2016" }] },
+    { id: 30, name: "Frank Lampard", nationality: "Engeland", difficulty: "easy", clubs: [{ name: "West Ham United", years: "1995-2001" }, { name: "Chelsea", years: "2001-2014" }, { name: "Manchester City", years: "2014-2015" }, { name: "New York City FC", years: "2015-2016" }] },
+
+    // GEMIDDELD - Bekende Nederlandse spelers
+    { id: 31, name: "Memphis Depay", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "PSV", years: "2011-2015" }, { name: "Manchester United", years: "2015-2017" }, { name: "Olympique Lyon", years: "2017-2021" }, { name: "Barcelona", years: "2021-2023" }, { name: "Atlético Madrid", years: "2023" }, { name: "Corinthians", years: "2024-heden" }] },
+    { id: 32, name: "Matthijs de Ligt", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Ajax", years: "2016-2019" }, { name: "Juventus", years: "2019-2022" }, { name: "Bayern München", years: "2022-2024" }, { name: "Manchester United", years: "2024-heden" }] },
+    { id: 33, name: "Cody Gakpo", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "PSV", years: "2018-2023" }, { name: "Liverpool", years: "2023-heden" }] },
+    { id: 34, name: "Xavi Simons", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Barcelona", years: "2010-2019" }, { name: "Paris Saint-Germain", years: "2019-2023" }, { name: "PSV", years: "2022-2023" }, { name: "RB Leipzig", years: "2023-heden" }] },
+    { id: 35, name: "Ryan Gravenberch", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Ajax", years: "2018-2022" }, { name: "Bayern München", years: "2022-2023" }, { name: "Liverpool", years: "2023-heden" }] },
+    { id: 36, name: "Denzel Dumfries", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Sparta Rotterdam", years: "2014-2018" }, { name: "SC Heerenveen", years: "2018-2020" }, { name: "PSV", years: "2020-2021" }, { name: "Inter Milan", years: "2021-heden" }] },
+    { id: 37, name: "Nathan Aké", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Chelsea", years: "2012-2017" }, { name: "Bournemouth", years: "2017-2020" }, { name: "Manchester City", years: "2020-heden" }] },
+    { id: 38, name: "Daley Blind", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Ajax", years: "2008-2014" }, { name: "Manchester United", years: "2014-2018" }, { name: "Ajax", years: "2018-2022" }, { name: "Bayern München", years: "2022-2023" }, { name: "Girona", years: "2023-heden" }] },
+    { id: 39, name: "Donyell Malen", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Ajax", years: "2015-2017" }, { name: "Arsenal", years: "2017" }, { name: "PSV", years: "2017-2021" }, { name: "Borussia Dortmund", years: "2021-heden" }] },
+    { id: 40, name: "Steven Bergwijn", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "PSV", years: "2014-2020" }, { name: "Tottenham Hotspur", years: "2020-2022" }, { name: "Ajax", years: "2022-2024" }, { name: "Al-Ittihad", years: "2024-heden" }] },
+    { id: 41, name: "Wout Weghorst", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Emmen", years: "2012-2013" }, { name: "Heracles Almelo", years: "2013-2016" }, { name: "AZ Alkmaar", years: "2016-2018" }, { name: "VfL Wolfsburg", years: "2018-2022" }, { name: "Burnley", years: "2022-2023" }, { name: "Manchester United", years: "2023" }, { name: "Hoffenheim", years: "2023-2024" }, { name: "Ajax", years: "2024-heden" }] },
+    { id: 42, name: "Teun Koopmeiners", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "AZ Alkmaar", years: "2017-2021" }, { name: "Atalanta", years: "2021-2024" }, { name: "Juventus", years: "2024-heden" }] },
+    { id: 43, name: "Micky van de Ven", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "FC Volendam", years: "2019-2021" }, { name: "VfL Wolfsburg", years: "2021-2023" }, { name: "Tottenham Hotspur", years: "2023-heden" }] },
+    { id: 44, name: "Jurriën Timber", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Ajax", years: "2020-2023" }, { name: "Arsenal", years: "2023-heden" }] },
+    { id: 45, name: "Jeremie Frimpong", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Manchester City", years: "2017-2019" }, { name: "Celtic", years: "2019-2021" }, { name: "Bayer Leverkusen", years: "2021-heden" }] },
+    { id: 46, name: "Tijjani Reijnders", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "PEC Zwolle", years: "2018-2020" }, { name: "AZ Alkmaar", years: "2020-2023" }, { name: "AC Milan", years: "2023-heden" }] },
+    { id: 47, name: "Brian Brobbey", nationality: "Nederland", difficulty: "medium", clubs: [{ name: "Ajax", years: "2020-2021" }, { name: "RB Leipzig", years: "2021-2022" }, { name: "Ajax", years: "2022-heden" }] },
+
+    // GEMIDDELD - Internationale topspelers
+    { id: 48, name: "Jude Bellingham", nationality: "Engeland", difficulty: "medium", clubs: [{ name: "Birmingham City", years: "2019-2020" }, { name: "Borussia Dortmund", years: "2020-2023" }, { name: "Real Madrid", years: "2023-heden" }] },
+    { id: 49, name: "Antoine Griezmann", nationality: "Frankrijk", difficulty: "medium", clubs: [{ name: "Real Sociedad", years: "2009-2014" }, { name: "Atlético Madrid", years: "2014-2019" }, { name: "Barcelona", years: "2019-2021" }, { name: "Atlético Madrid", years: "2021-heden" }] },
+    { id: 50, name: "Romelu Lukaku", nationality: "België", difficulty: "medium", clubs: [{ name: "Anderlecht", years: "2009-2011" }, { name: "Chelsea", years: "2011-2014" }, { name: "Everton", years: "2013-2017" }, { name: "Manchester United", years: "2017-2019" }, { name: "Inter Milan", years: "2019-2021" }, { name: "Chelsea", years: "2021-2022" }, { name: "Inter Milan", years: "2022-2023" }, { name: "AS Roma", years: "2023-heden" }] },
+    { id: 51, name: "Paul Pogba", nationality: "Frankrijk", difficulty: "medium", clubs: [{ name: "Manchester United", years: "2009-2012" }, { name: "Juventus", years: "2012-2016" }, { name: "Manchester United", years: "2016-2022" }, { name: "Juventus", years: "2022-2024" }] },
+    { id: 52, name: "Son Heung-min", nationality: "Zuid-Korea", difficulty: "medium", clubs: [{ name: "Hamburger SV", years: "2010-2013" }, { name: "Bayer Leverkusen", years: "2013-2015" }, { name: "Tottenham Hotspur", years: "2015-heden" }] },
+    { id: 53, name: "Bruno Fernandes", nationality: "Portugal", difficulty: "medium", clubs: [{ name: "Udinese", years: "2013-2016" }, { name: "Sampdoria", years: "2016-2017" }, { name: "Sporting CP", years: "2017-2020" }, { name: "Manchester United", years: "2020-heden" }] },
+    { id: 54, name: "Sadio Mané", nationality: "Senegal", difficulty: "medium", clubs: [{ name: "Red Bull Salzburg", years: "2012-2014" }, { name: "Southampton", years: "2014-2016" }, { name: "Liverpool", years: "2016-2022" }, { name: "Bayern München", years: "2022-2023" }, { name: "Al-Nassr", years: "2023-heden" }] },
+    { id: 55, name: "Toni Kroos", nationality: "Duitsland", difficulty: "medium", clubs: [{ name: "Bayern München", years: "2007-2014" }, { name: "Real Madrid", years: "2014-2024" }] },
+    { id: 56, name: "Xabi Alonso", nationality: "Spanje", difficulty: "medium", clubs: [{ name: "Real Sociedad", years: "1999-2004" }, { name: "Liverpool", years: "2004-2009" }, { name: "Real Madrid", years: "2009-2014" }, { name: "Bayern München", years: "2014-2017" }] },
+    { id: 57, name: "Martin Ødegaard", nationality: "Noorwegen", difficulty: "medium", clubs: [{ name: "Strømsgodset", years: "2014-2015" }, { name: "Real Madrid", years: "2015-2021" }, { name: "SC Heerenveen", years: "2017" }, { name: "Vitesse", years: "2018-2019" }, { name: "Real Sociedad", years: "2019-2020" }, { name: "Arsenal", years: "2021-heden" }] },
+    { id: 58, name: "Leroy Sané", nationality: "Duitsland", difficulty: "medium", clubs: [{ name: "Schalke 04", years: "2014-2016" }, { name: "Manchester City", years: "2016-2020" }, { name: "Bayern München", years: "2020-heden" }] },
+    { id: 59, name: "Jadon Sancho", nationality: "Engeland", difficulty: "medium", clubs: [{ name: "Manchester City", years: "2015-2017" }, { name: "Borussia Dortmund", years: "2017-2021" }, { name: "Manchester United", years: "2021-heden" }] },
+    { id: 60, name: "Ousmane Dembélé", nationality: "Frankrijk", difficulty: "medium", clubs: [{ name: "Stade Rennais", years: "2015-2016" }, { name: "Borussia Dortmund", years: "2016-2017" }, { name: "Barcelona", years: "2017-2023" }, { name: "Paris Saint-Germain", years: "2023-heden" }] },
+
+    // MOEILIJK - Minder bekende Nederlandse spelers
+    { id: 61, name: "Quincy Promes", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Go Ahead Eagles", years: "2010-2012" }, { name: "FC Twente", years: "2012-2014" }, { name: "Spartak Moskou", years: "2014-2019" }, { name: "Sevilla", years: "2019-2020" }, { name: "Ajax", years: "2019-2021" }, { name: "Spartak Moskou", years: "2021-2023" }] },
+    { id: 62, name: "Davy Klaassen", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2011-2017" }, { name: "Everton", years: "2017-2018" }, { name: "Werder Bremen", years: "2018-2020" }, { name: "Ajax", years: "2020-2023" }, { name: "Inter Milan", years: "2023-2024" }] },
+    { id: 63, name: "Luuk de Jong", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "De Graafschap", years: "2007-2009" }, { name: "FC Twente", years: "2009-2012" }, { name: "Borussia Mönchengladbach", years: "2012-2014" }, { name: "PSV", years: "2014-2019" }, { name: "Sevilla", years: "2019-2021" }, { name: "Barcelona", years: "2021-2022" }, { name: "PSV", years: "2022-heden" }] },
+    { id: 64, name: "Georginio Wijnaldum", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Feyenoord", years: "2007-2011" }, { name: "PSV", years: "2011-2015" }, { name: "Newcastle United", years: "2015-2016" }, { name: "Liverpool", years: "2016-2021" }, { name: "Paris Saint-Germain", years: "2021-2022" }, { name: "AS Roma", years: "2022-2023" }, { name: "Al-Ettifaq", years: "2023-heden" }] },
+    { id: 65, name: "Kevin Strootman", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Sparta Rotterdam", years: "2007-2009" }, { name: "FC Utrecht", years: "2009-2011" }, { name: "PSV", years: "2011-2013" }, { name: "AS Roma", years: "2013-2018" }, { name: "Olympique Marseille", years: "2018-2021" }, { name: "Genoa", years: "2021-2022" }] },
+    { id: 66, name: "Jasper Cillessen", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "NEC Nijmegen", years: "2010-2011" }, { name: "Ajax", years: "2011-2016" }, { name: "Barcelona", years: "2016-2019" }, { name: "Valencia", years: "2019-2023" }, { name: "Las Palmas", years: "2023-heden" }] },
+    { id: 67, name: "Stefan de Vrij", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Feyenoord", years: "2008-2014" }, { name: "Lazio", years: "2014-2018" }, { name: "Inter Milan", years: "2018-heden" }] },
+    { id: 68, name: "Rick Karsdorp", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Feyenoord", years: "2013-2017" }, { name: "AS Roma", years: "2017-heden" }] },
+    { id: 69, name: "Hans Hateboer", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "FC Groningen", years: "2014-2017" }, { name: "Atalanta", years: "2017-heden" }] },
+    { id: 70, name: "Marten de Roon", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Sparta Rotterdam", years: "2008-2011" }, { name: "SC Heerenveen", years: "2011-2015" }, { name: "Atalanta", years: "2015-2016" }, { name: "Middlesbrough", years: "2016-2017" }, { name: "Atalanta", years: "2017-heden" }] },
+    { id: 71, name: "Sam Lammers", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "PSV", years: "2015-2020" }, { name: "SC Heerenveen", years: "2018-2019" }, { name: "Atalanta", years: "2020-2022" }, { name: "Eintracht Frankfurt", years: "2021-2022" }, { name: "Empoli", years: "2022-2023" }, { name: "Rangers", years: "2023-2024" }, { name: "FC Twente", years: "2024-heden" }] },
+    { id: 72, name: "Vincent Janssen", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "AZ Alkmaar", years: "2013-2016" }, { name: "Tottenham Hotspur", years: "2016-2019" }, { name: "Fenerbahçe", years: "2017-2018" }, { name: "CF Monterrey", years: "2019-2022" }, { name: "Royal Antwerp", years: "2022-heden" }] },
+    { id: 73, name: "Bas Dost", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "FC Emmen", years: "2006-2007" }, { name: "Heracles Almelo", years: "2007-2010" }, { name: "SC Heerenveen", years: "2010-2012" }, { name: "VfL Wolfsburg", years: "2012-2016" }, { name: "Sporting CP", years: "2016-2019" }, { name: "Eintracht Frankfurt", years: "2019-2020" }, { name: "Club Brugge", years: "2020-2022" }] },
+    { id: 74, name: "Jeroen Zoet", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "PSV", years: "2008-2020" }, { name: "FC Utrecht", years: "2014-2015" }, { name: "Spezia", years: "2020-2022" }] },
+    { id: 75, name: "Joel Veltman", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2011-2020" }, { name: "Brighton", years: "2020-heden" }] },
+    { id: 76, name: "Kenny Tete", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2013-2017" }, { name: "Olympique Lyon", years: "2017-2020" }, { name: "Fulham", years: "2020-heden" }] },
+    { id: 77, name: "Justin Kluivert", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2016-2018" }, { name: "AS Roma", years: "2018-2022" }, { name: "RB Leipzig", years: "2019-2020" }, { name: "Nice", years: "2020-2021" }, { name: "Valencia", years: "2021-2022" }, { name: "Fulham", years: "2022-2023" }, { name: "Bournemouth", years: "2023-heden" }] },
+    { id: 78, name: "Mitchell Bakker", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2017-2019" }, { name: "Paris Saint-Germain", years: "2019-2021" }, { name: "Bayer Leverkusen", years: "2021-2023" }, { name: "Atalanta", years: "2023-heden" }] },
+
+    // MOEILIJK - Eredivisie spelers (huidig en recent)
+    { id: 79, name: "Santiago Giménez", nationality: "Mexico", difficulty: "hard", clubs: [{ name: "Cruz Azul", years: "2019-2022" }, { name: "Feyenoord", years: "2022-heden" }] },
+    { id: 80, name: "Orkun Kökçü", nationality: "Turkije", difficulty: "hard", clubs: [{ name: "Feyenoord", years: "2018-2023" }, { name: "Benfica", years: "2023-heden" }] },
+    { id: 81, name: "Guus Til", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "AZ Alkmaar", years: "2015-2019" }, { name: "Spartak Moskou", years: "2019-2022" }, { name: "Freiburg", years: "2020-2021" }, { name: "PSV", years: "2021-2023" }, { name: "Feyenoord", years: "2023-heden" }] },
+    { id: 82, name: "Lutsharel Geertruida", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Feyenoord", years: "2019-heden" }] },
+    { id: 83, name: "Joey Veerman", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "FC Volendam", years: "2017-2019" }, { name: "SC Heerenveen", years: "2019-2022" }, { name: "PSV", years: "2022-heden" }] },
+    { id: 84, name: "Jerdy Schouten", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "ADO Den Haag", years: "2016-2017" }, { name: "Excelsior", years: "2017-2019" }, { name: "Bologna", years: "2019-2024" }, { name: "PSV", years: "2024-heden" }] },
+    { id: 85, name: "Kenneth Taylor", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2020-heden" }] },
+    { id: 86, name: "Devyne Rensch", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2020-heden" }] },
+    { id: 87, name: "Jorrel Hato", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2022-heden" }] },
+    { id: 88, name: "Quinten Timber", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2019-2021" }, { name: "FC Utrecht", years: "2021-2024" }, { name: "Feyenoord", years: "2024-heden" }] },
+    { id: 89, name: "Milos Kerkez", nationality: "Hongarije", difficulty: "hard", clubs: [{ name: "AC Milan", years: "2020-2021" }, { name: "AZ Alkmaar", years: "2021-2023" }, { name: "Bournemouth", years: "2023-heden" }] },
+    { id: 90, name: "Vangelis Pavlidis", nationality: "Griekenland", difficulty: "hard", clubs: [{ name: "VfL Bochum", years: "2019-2021" }, { name: "Willem II", years: "2021" }, { name: "AZ Alkmaar", years: "2021-2024" }, { name: "Benfica", years: "2024-heden" }] },
+    { id: 91, name: "Youri Regeer", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2020-2023" }, { name: "FC Twente", years: "2023-heden" }] },
+    { id: 92, name: "Sven Botman", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2018-2020" }, { name: "SC Heerenveen", years: "2018-2019" }, { name: "Lille", years: "2020-2022" }, { name: "Newcastle United", years: "2022-heden" }] },
+    { id: 93, name: "Arnaut Danjuma", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "NEC Nijmegen", years: "2016-2018" }, { name: "Club Brugge", years: "2018-2019" }, { name: "Bournemouth", years: "2019-2021" }, { name: "Villarreal", years: "2021-2024" }, { name: "Everton", years: "2023" }, { name: "Tottenham Hotspur", years: "2023" }] },
+    { id: 94, name: "Calvin Stengs", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "AZ Alkmaar", years: "2016-2021" }, { name: "Nice", years: "2021-2022" }, { name: "Royal Antwerp", years: "2022-2023" }, { name: "Feyenoord", years: "2023-heden" }] },
+    { id: 95, name: "Noa Lang", nationality: "Nederland", difficulty: "hard", clubs: [{ name: "Ajax", years: "2018-2020" }, { name: "FC Twente", years: "2019-2020" }, { name: "Club Brugge", years: "2020-2023" }, { name: "PSV", years: "2023-heden" }] },
+
+    // MOEILIJK - Internationale spelers met complexe carrières
+    { id: 96, name: "Victor Osimhen", nationality: "Nigeria", difficulty: "hard", clubs: [{ name: "VfL Wolfsburg", years: "2017-2018" }, { name: "Charleroi", years: "2018-2019" }, { name: "Lille", years: "2019-2020" }, { name: "Napoli", years: "2020-2024" }, { name: "Galatasaray", years: "2024-heden" }] },
+    { id: 97, name: "João Cancelo", nationality: "Portugal", difficulty: "hard", clubs: [{ name: "Benfica", years: "2014-2015" }, { name: "Valencia", years: "2015-2018" }, { name: "Inter Milan", years: "2017-2018" }, { name: "Juventus", years: "2018-2019" }, { name: "Manchester City", years: "2019-heden" }, { name: "Bayern München", years: "2023" }, { name: "Barcelona", years: "2023-2024" }] },
+    { id: 98, name: "Achraf Hakimi", nationality: "Marokko", difficulty: "hard", clubs: [{ name: "Real Madrid", years: "2017-2020" }, { name: "Borussia Dortmund", years: "2018-2020" }, { name: "Inter Milan", years: "2020-2021" }, { name: "Paris Saint-Germain", years: "2021-heden" }] },
+    { id: 99, name: "Diogo Jota", nationality: "Portugal", difficulty: "hard", clubs: [{ name: "Paços de Ferreira", years: "2014-2016" }, { name: "Atlético Madrid", years: "2016-2017" }, { name: "FC Porto", years: "2016-2017" }, { name: "Wolverhampton", years: "2017-2020" }, { name: "Liverpool", years: "2020-heden" }] },
+    { id: 100, name: "Darwin Núñez", nationality: "Uruguay", difficulty: "hard", clubs: [{ name: "Peñarol", years: "2017-2019" }, { name: "Almería", years: "2019-2020" }, { name: "Benfica", years: "2020-2022" }, { name: "Liverpool", years: "2022-heden" }] },
+    { id: 101, name: "Aurélien Tchouaméni", nationality: "Frankrijk", difficulty: "hard", clubs: [{ name: "Bordeaux", years: "2018-2020" }, { name: "AS Monaco", years: "2020-2022" }, { name: "Real Madrid", years: "2022-heden" }] },
+    { id: 102, name: "Enzo Fernández", nationality: "Argentinië", difficulty: "hard", clubs: [{ name: "River Plate", years: "2020-2022" }, { name: "Benfica", years: "2022-2023" }, { name: "Chelsea", years: "2023-heden" }] },
+    { id: 103, name: "Khvicha Kvaratskhelia", nationality: "Georgië", difficulty: "hard", clubs: [{ name: "Dinamo Tbilisi", years: "2017-2019" }, { name: "Lokomotiv Moskou", years: "2019" }, { name: "Rubin Kazan", years: "2019-2021" }, { name: "Dinamo Batumi", years: "2022" }, { name: "Napoli", years: "2022-2025" }, { name: "Paris Saint-Germain", years: "2025-heden" }] },
+    { id: 104, name: "Florian Wirtz", nationality: "Duitsland", difficulty: "hard", clubs: [{ name: "Bayer Leverkusen", years: "2020-heden" }] },
+    { id: 105, name: "Jamal Musiala", nationality: "Duitsland", difficulty: "hard", clubs: [{ name: "Chelsea", years: "2016-2019" }, { name: "Bayern München", years: "2019-heden" }] },
+    { id: 106, name: "Pedri", nationality: "Spanje", difficulty: "hard", clubs: [{ name: "Las Palmas", years: "2018-2020" }, { name: "Barcelona", years: "2020-heden" }] },
+    { id: 107, name: "Gavi", nationality: "Spanje", difficulty: "hard", clubs: [{ name: "Barcelona", years: "2021-heden" }] },
+    { id: 108, name: "Lamine Yamal", nationality: "Spanje", difficulty: "hard", clubs: [{ name: "Barcelona", years: "2023-heden" }] },
+    { id: 109, name: "Bukayo Saka", nationality: "Engeland", difficulty: "hard", clubs: [{ name: "Arsenal", years: "2018-heden" }] },
+    { id: 110, name: "Phil Foden", nationality: "Engeland", difficulty: "hard", clubs: [{ name: "Manchester City", years: "2017-heden" }] },
+    { id: 111, name: "Declan Rice", nationality: "Engeland", difficulty: "hard", clubs: [{ name: "West Ham United", years: "2015-2023" }, { name: "Arsenal", years: "2023-heden" }] },
+    { id: 112, name: "William Saliba", nationality: "Frankrijk", difficulty: "hard", clubs: [{ name: "Saint-Étienne", years: "2018-2019" }, { name: "Arsenal", years: "2019-heden" }, { name: "Nice", years: "2021" }, { name: "Olympique Marseille", years: "2021-2022" }] },
+    { id: 113, name: "André Onana", nationality: "Kameroen", difficulty: "hard", clubs: [{ name: "Barcelona", years: "2010-2015" }, { name: "Ajax", years: "2015-2022" }, { name: "Inter Milan", years: "2022-2023" }, { name: "Manchester United", years: "2023-heden" }] },
+    { id: 114, name: "Alisson Becker", nationality: "Brazilië", difficulty: "hard", clubs: [{ name: "Internacional", years: "2013-2016" }, { name: "AS Roma", years: "2016-2018" }, { name: "Liverpool", years: "2018-heden" }] },
+    { id: 115, name: "Ederson", nationality: "Brazilië", difficulty: "hard", clubs: [{ name: "Benfica", years: "2015-2017" }, { name: "Manchester City", years: "2017-heden" }] },
+    { id: 116, name: "Thibaut Courtois", nationality: "België", difficulty: "hard", clubs: [{ name: "Racing Genk", years: "2009-2011" }, { name: "Chelsea", years: "2011-2018" }, { name: "Atlético Madrid", years: "2011-2014" }, { name: "Real Madrid", years: "2018-heden" }] },
+    { id: 117, name: "Marc-André ter Stegen", nationality: "Duitsland", difficulty: "hard", clubs: [{ name: "Borussia Mönchengladbach", years: "2011-2014" }, { name: "Barcelona", years: "2014-heden" }] },
+    { id: 118, name: "Vinicius Junior", nationality: "Brazilië", difficulty: "hard", clubs: [{ name: "Flamengo", years: "2017-2018" }, { name: "Real Madrid", years: "2018-heden" }] },
+    { id: 119, name: "Rodri", nationality: "Spanje", difficulty: "hard", clubs: [{ name: "Villarreal", years: "2015-2018" }, { name: "Atlético Madrid", years: "2018-2019" }, { name: "Manchester City", years: "2019-heden" }] },
+    { id: 120, name: "Rúben Dias", nationality: "Portugal", difficulty: "hard", clubs: [{ name: "Benfica", years: "2017-2020" }, { name: "Manchester City", years: "2020-heden" }] }
+];
+
+function getAllPlayerNames() { return PLAYERS_DATABASE.map(p => p.name).sort(); }
+const ALL_PLAYER_NAMES = getAllPlayerNames();
+
+let gameState = {
+    mode: null, players: [], currentPlayerIndex: 0, round: 1, maxRounds: 10,
+    currentQuestion: null, revealedClubs: 1, timer: null, timeLeft: 30,
+    guessedClubs: [], usedPlayerIds: [], clubsMode: 'random', customPlayer: null,
+    difficulty: 'easy'
+};
+
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function goToMenu() { resetGame(); showScreen('main-menu'); }
+function selectGameMode(mode) { gameState.mode = mode; showScreen('player-setup'); }
+
+function setPlayerCount(count) {
+    gameState.players = [];
+    for (let i = 0; i < count; i++) gameState.players.push({ name: `Speler ${i + 1}`, score: 0 });
+    const div = document.getElementById('name-inputs');
+    div.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text'; input.className = 'name-input';
+        input.placeholder = `Speler ${i + 1}`; input.id = `player-name-${i}`;
+        input.value = count === 1 ? 'Jij' : '';
+        div.appendChild(input);
+    }
+    document.getElementById('player-names').style.display = 'block';
+}
+
+function setDifficulty(diff) {
+    gameState.difficulty = diff;
+    document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('selected'));
+    document.getElementById(`diff-${diff}`).classList.add('selected');
+    const descriptions = {
+        'easy': 'Bekende spelers met herkenbare carrières',
+        'medium': 'Mix van bekende en minder bekende spelers',
+        'hard': 'Uitdagende spelers met complexe carrières'
+    };
+    document.getElementById('difficulty-desc').textContent = descriptions[diff];
+}
+
+function getFilteredPlayers() {
+    if (gameState.difficulty === 'easy') {
+        return PLAYERS_DATABASE.filter(p => p.difficulty === 'easy');
+    } else if (gameState.difficulty === 'medium') {
+        return PLAYERS_DATABASE.filter(p => p.difficulty === 'easy' || p.difficulty === 'medium');
+    } else {
+        return PLAYERS_DATABASE;
+    }
+}
+
+function proceedToModeOptions() {
+    for (let i = 0; i < gameState.players.length; i++) {
+        const input = document.getElementById(`player-name-${i}`);
+        gameState.players[i].name = input.value.trim() || `Speler ${i + 1}`;
+    }
+    gameState.round = 1; gameState.currentPlayerIndex = 0; gameState.usedPlayerIds = [];
+    if (gameState.mode === 'guess-clubs') { showScreen('clubs-mode-setup'); }
+    else { startGame(); }
+}
+
+function selectClubsMode(mode) {
+    gameState.clubsMode = mode;
+    document.querySelectorAll('.mode-option').forEach(opt => opt.classList.remove('selected'));
+    document.querySelector(`.mode-option input[value="${mode}"]`).parentElement.classList.add('selected');
+    const customSection = document.getElementById('custom-player-section');
+    if (mode === 'custom') { customSection.classList.add('active'); }
+    else { customSection.classList.remove('active'); }
+}
+
+function startGame() {
+    if (gameState.mode === 'guess-clubs' && gameState.clubsMode === 'custom') {
+        const customInput = document.getElementById('custom-player-input');
+        const playerName = customInput.value.trim();
+        const foundPlayer = PLAYERS_DATABASE.find(p => p.name.toLowerCase() === playerName.toLowerCase());
+        if (!foundPlayer) { alert('Speler niet gevonden. Kies een andere speler.'); return; }
+        gameState.customPlayer = foundPlayer;
+    }
+    if (gameState.mode === 'guess-player') startGuessPlayerGame();
+    else startGuessClubsGame();
+}
+
+function startGuessPlayerGame() { showScreen('guess-player-game'); updateScoreboard(); loadNextQuestion(); }
+
+function loadNextQuestion() {
+    const filtered = getFilteredPlayers();
+    let available = filtered.filter(p => !gameState.usedPlayerIds.includes(p.id));
+    if (available.length === 0) { gameState.usedPlayerIds = []; available = [...filtered]; }
+    const idx = Math.floor(Math.random() * available.length);
+    gameState.currentQuestion = available[idx];
+    gameState.usedPlayerIds.push(gameState.currentQuestion.id);
+    gameState.revealedClubs = 1;
+    document.getElementById('round-number').textContent = gameState.round;
+    document.getElementById('current-player-name').textContent = gameState.players[gameState.currentPlayerIndex].name;
+    renderClubsList();
+    document.getElementById('player-answer').value = '';
+    document.getElementById('suggestions').classList.remove('active');
+    document.getElementById('answer-reveal').style.display = 'none';
+    startTimer();
+}
+
+function renderClubsList() {
+    const list = document.getElementById('clubs-list');
+    list.innerHTML = '';
+    const clubs = gameState.currentQuestion.clubs;
+    for (let i = 0; i < clubs.length; i++) {
+        const div = document.createElement('div');
+        div.className = 'club-item';
+        if (i < gameState.revealedClubs) {
+            div.innerHTML = `<span class="club-name">${clubs[i].name}</span><span class="club-years">${clubs[i].years}</span>`;
+        } else {
+            div.className += ' hidden';
+            div.innerHTML = `<span class="club-name">???</span>`;
+        }
+        list.appendChild(div);
+    }
+}
+
+function revealNextClub() {
+    if (gameState.revealedClubs < gameState.currentQuestion.clubs.length) {
+        gameState.revealedClubs++;
+        renderClubsList();
+    }
+}
+
+function submitGuessPlayer() {
+    const answer = document.getElementById('player-answer').value.trim().toLowerCase();
+    const correct = gameState.currentQuestion.name.toLowerCase();
+    stopTimer();
+    const isCorrect = answer === correct || (correct.includes(answer) && answer.length > 3);
+    showAnswerReveal(isCorrect, false);
+}
+
+function showAnswerReveal(isCorrect, isTimeout) {
+    const reveal = document.getElementById('answer-reveal');
+    const resultEl = document.getElementById('reveal-result');
+    const correctEl = document.getElementById('correct-answer');
+    const pointsEl = document.getElementById('points-earned');
+    let points = 0;
+    if (isTimeout) { resultEl.textContent = 'Tijd is op!'; resultEl.className = 'timeout'; }
+    else if (isCorrect) {
+        resultEl.textContent = 'Correct!'; resultEl.className = 'correct';
+        const total = gameState.currentQuestion.clubs.length;
+        const hidden = total - gameState.revealedClubs;
+        points = 100 + (hidden * 20) + Math.floor(gameState.timeLeft * 2);
+    } else { resultEl.textContent = 'Helaas, fout!'; resultEl.className = 'incorrect'; }
+    correctEl.textContent = gameState.currentQuestion.name;
+    if (points > 0) {
+        pointsEl.textContent = `+${points} punten!`;
+        gameState.players[gameState.currentPlayerIndex].score += points;
+        updateScoreboard();
+    } else { pointsEl.textContent = ''; }
+    reveal.style.display = 'flex';
+}
+
+function nextRound() {
+    document.getElementById('answer-reveal').style.display = 'none';
+    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+    if (gameState.currentPlayerIndex === 0) gameState.round++;
+    if (gameState.round > gameState.maxRounds) showGameOver();
+    else loadNextQuestion();
+}
+
+function startGuessClubsGame() { showScreen('guess-clubs-game'); updateScoreboardClubs(); loadNextQuestionClubs(); }
+
+function loadNextQuestionClubs() {
+    if (gameState.clubsMode === 'custom' && gameState.customPlayer) {
+        gameState.currentQuestion = gameState.customPlayer;
+    } else {
+        const filtered = getFilteredPlayers();
+        let available = filtered.filter(p => !gameState.usedPlayerIds.includes(p.id) && p.clubs.length >= 3);
+        if (available.length === 0) { gameState.usedPlayerIds = []; available = filtered.filter(p => p.clubs.length >= 3); }
+        const idx = Math.floor(Math.random() * available.length);
+        gameState.currentQuestion = available[idx];
+        gameState.usedPlayerIds.push(gameState.currentQuestion.id);
+    }
+    gameState.guessedClubs = [];
+    document.getElementById('round-number-clubs').textContent = gameState.round;
+    document.getElementById('current-player-name-clubs').textContent = gameState.players[gameState.currentPlayerIndex].name;
+    document.getElementById('player-to-guess').textContent = gameState.currentQuestion.name;
+    document.getElementById('player-nationality').textContent = gameState.currentQuestion.nationality;
+    document.getElementById('clubs-found').textContent = '0';
+    document.getElementById('clubs-total').textContent = getUniqueClubs().length;
+    document.getElementById('guessed-clubs').innerHTML = '';
+    document.getElementById('club-answer').value = '';
+    document.getElementById('club-suggestions').classList.remove('active');
+    document.getElementById('answer-reveal-clubs').style.display = 'none';
+    startTimerClubs();
+}
+
+function getUniqueClubs() {
+    const clubs = new Set();
+    gameState.currentQuestion.clubs.forEach(c => clubs.add(c.name));
+    return Array.from(clubs);
+}
+
+function submitGuessClub() {
+    const input = document.getElementById('club-answer');
+    const answer = input.value.trim().toLowerCase();
+    if (!answer) return;
+    const unique = getUniqueClubs();
+    const matched = unique.find(c => c.toLowerCase() === answer);
+    if (matched && !gameState.guessedClubs.includes(matched)) {
+        gameState.guessedClubs.push(matched);
+        const div = document.getElementById('guessed-clubs');
+        const tag = document.createElement('span');
+        tag.className = 'guessed-club'; tag.textContent = matched;
+        div.appendChild(tag);
+        document.getElementById('clubs-found').textContent = gameState.guessedClubs.length;
+        if (gameState.guessedClubs.length === unique.length) { stopTimer(); showAnswerRevealClubs(false); }
+    }
+    input.value = '';
+    document.getElementById('club-suggestions').classList.remove('active');
+}
+
+function showAnswerRevealClubs(isTimeout) {
+    const reveal = document.getElementById('answer-reveal-clubs');
+    const resultEl = document.getElementById('reveal-result-clubs');
+    const playerNameEl = document.getElementById('player-name-result');
+    const allClubsEl = document.getElementById('all-clubs-list');
+    const pointsEl = document.getElementById('points-earned-clubs');
+    const unique = getUniqueClubs();
+    const found = gameState.guessedClubs.length;
+    const total = unique.length;
+    if (isTimeout) {
+        if (found === total) { resultEl.textContent = 'Perfect!'; resultEl.className = 'correct'; }
+        else if (found >= total / 2) { resultEl.textContent = 'Goed gedaan!'; resultEl.className = 'correct'; }
+        else { resultEl.textContent = 'Tijd is op!'; resultEl.className = 'timeout'; }
+    } else { resultEl.textContent = 'Alle clubs gevonden!'; resultEl.className = 'correct'; }
+    playerNameEl.textContent = gameState.currentQuestion.name;
+    allClubsEl.innerHTML = '';
+    unique.forEach(club => {
+        const tag = document.createElement('span');
+        tag.className = 'club-tag';
+        if (gameState.guessedClubs.includes(club)) tag.className += ' found';
+        tag.textContent = club;
+        allClubsEl.appendChild(tag);
+    });
+    const bonus = found === total ? 100 : 0;
+    const timeBonus = found === total ? Math.floor(gameState.timeLeft * 2) : 0;
+    const points = (found * 25) + bonus + timeBonus;
+    pointsEl.textContent = `+${points} punten! (${found}/${total} clubs)`;
+    gameState.players[gameState.currentPlayerIndex].score += points;
+    updateScoreboardClubs();
+    reveal.style.display = 'flex';
+}
+
+function nextRoundClubs() {
+    document.getElementById('answer-reveal-clubs').style.display = 'none';
+    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+    if (gameState.currentPlayerIndex === 0) gameState.round++;
+    if (gameState.round > gameState.maxRounds) showGameOver();
+    else loadNextQuestionClubs();
+}
+
+function startTimer() {
+    gameState.timeLeft = 30;
+    updateTimerDisplay('timer-display');
+    gameState.timer = setInterval(() => {
+        gameState.timeLeft--;
+        updateTimerDisplay('timer-display');
+        if (gameState.timeLeft <= 0) { stopTimer(); showAnswerReveal(false, true); }
+    }, 1000);
+}
+
+function startTimerClubs() {
+    gameState.timeLeft = 30;
+    updateTimerDisplay('timer-display-clubs');
+    gameState.timer = setInterval(() => {
+        gameState.timeLeft--;
+        updateTimerDisplay('timer-display-clubs');
+        if (gameState.timeLeft <= 0) { stopTimer(); showAnswerRevealClubs(true); }
+    }, 1000);
+}
+
+function updateTimerDisplay(id) {
+    const el = document.getElementById(id);
+    el.textContent = gameState.timeLeft;
+    el.classList.remove('warning', 'danger');
+    if (gameState.timeLeft <= 5) el.classList.add('danger');
+    else if (gameState.timeLeft <= 10) el.classList.add('warning');
+}
+
+function stopTimer() { if (gameState.timer) { clearInterval(gameState.timer); gameState.timer = null; } }
+
+function updateScoreboard() {
+    const sb = document.getElementById('scoreboard');
+    sb.innerHTML = '';
+    gameState.players.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'score-item' + (i === gameState.currentPlayerIndex ? ' active' : '');
+        div.innerHTML = `<div class="score-name">${p.name}</div><div class="score-value">${p.score}</div>`;
+        sb.appendChild(div);
+    });
+}
+
+function updateScoreboardClubs() {
+    const sb = document.getElementById('scoreboard-clubs');
+    sb.innerHTML = '';
+    gameState.players.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'score-item' + (i === gameState.currentPlayerIndex ? ' active' : '');
+        div.innerHTML = `<div class="score-name">${p.name}</div><div class="score-value">${p.score}</div>`;
+        sb.appendChild(div);
+    });
+}
+
+function showGameOver() {
+    showScreen('game-over');
+    const finalEl = document.getElementById('final-scores');
+    const winnerEl = document.getElementById('winner-announcement');
+    const sorted = [...gameState.players].sort((a, b) => b.score - a.score);
+    finalEl.innerHTML = '';
+    sorted.forEach((p, i) => {
+        const rank = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+        const div = document.createElement('div');
+        div.className = 'final-score-item' + (i === 0 ? ' winner' : '');
+        div.innerHTML = `<span class="rank">${rank}</span><span class="name">${p.name}</span><span class="score">${p.score}</span>`;
+        finalEl.appendChild(div);
+    });
+    if (gameState.players.length > 1) winnerEl.textContent = `${sorted[0].name} wint!`;
+    else winnerEl.textContent = `Je eindscore: ${sorted[0].score} punten!`;
+}
+
+function restartGame() {
+    gameState.players.forEach(p => p.score = 0);
+    gameState.round = 1; gameState.currentPlayerIndex = 0; gameState.usedPlayerIds = [];
+    if (gameState.mode === 'guess-player') startGuessPlayerGame();
+    else startGuessClubsGame();
+}
+
+function resetGame() {
+    stopTimer();
+    gameState = { mode: null, players: [], currentPlayerIndex: 0, round: 1, maxRounds: 10,
+        currentQuestion: null, revealedClubs: 1, timer: null, timeLeft: 30, guessedClubs: [],
+        usedPlayerIds: [], clubsMode: 'random', customPlayer: null, difficulty: 'easy' };
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('total-players-count').textContent = `${PLAYERS_DATABASE.length} spelers beschikbaar`;
+
+    const playerInput = document.getElementById('player-answer');
+    const playerSuggestions = document.getElementById('suggestions');
+    playerInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        if (q.length < 2) { playerSuggestions.classList.remove('active'); return; }
+        const matches = ALL_PLAYER_NAMES.filter(n => n.toLowerCase().includes(q)).slice(0, 5);
+        if (matches.length > 0) {
+            playerSuggestions.innerHTML = matches.map(n => `<div class="suggestion-item" onclick="selectPlayerSuggestion('${n}')">${n}</div>`).join('');
+            playerSuggestions.classList.add('active');
+        } else { playerSuggestions.classList.remove('active'); }
+    });
+    playerInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitGuessPlayer(); } });
+
+    const clubInput = document.getElementById('club-answer');
+    const clubSuggestions = document.getElementById('club-suggestions');
+    clubInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        if (q.length < 2) { clubSuggestions.classList.remove('active'); return; }
+        const unique = getUniqueClubs();
+        const matches = unique.filter(c => c.toLowerCase().includes(q) && !gameState.guessedClubs.includes(c)).slice(0, 5);
+        if (matches.length > 0) {
+            clubSuggestions.innerHTML = matches.map(c => `<div class="suggestion-item" onclick="selectClubSuggestion('${c}')">${c}</div>`).join('');
+            clubSuggestions.classList.add('active');
+        } else { clubSuggestions.classList.remove('active'); }
+    });
+    clubInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitGuessClub(); } });
+
+    const customPlayerInput = document.getElementById('custom-player-input');
+    const customPlayerSuggestions = document.getElementById('custom-player-suggestions');
+    customPlayerInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        if (q.length < 2) { customPlayerSuggestions.classList.remove('active'); return; }
+        const matches = ALL_PLAYER_NAMES.filter(n => n.toLowerCase().includes(q)).slice(0, 5);
+        if (matches.length > 0) {
+            customPlayerSuggestions.innerHTML = matches.map(n => `<div class="suggestion-item" onclick="selectCustomPlayer('${n}')">${n}</div>`).join('');
+            customPlayerSuggestions.classList.add('active');
+        } else { customPlayerSuggestions.classList.remove('active'); }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.answer-section') && !e.target.closest('#custom-player-section')) {
+            playerSuggestions.classList.remove('active');
+            clubSuggestions.classList.remove('active');
+            customPlayerSuggestions.classList.remove('active');
+        }
+    });
+});
+
+function selectPlayerSuggestion(name) {
+    document.getElementById('player-answer').value = name;
+    document.getElementById('suggestions').classList.remove('active');
+}
+
+function selectClubSuggestion(club) {
+    document.getElementById('club-answer').value = club;
+    document.getElementById('club-suggestions').classList.remove('active');
+    submitGuessClub();
+}
+
+function selectCustomPlayer(name) {
+    document.getElementById('custom-player-input').value = name;
+    document.getElementById('custom-player-suggestions').classList.remove('active');
+}
+</script>
+</body>
+</html>
